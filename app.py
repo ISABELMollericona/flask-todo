@@ -3,48 +3,70 @@ from flask_sqlalchemy import SQLAlchemy
 
 app = Flask(__name__)
 
-# /// = relative path, //// = absolute path
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///db.sqlite'
+# Configuración de la base de datos SQLite
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///tareas.sqlite'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
 
-class Todo(db.Model):
+# Modelo de Tareas
+class Tarea(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    title = db.Column(db.String(100))
-    complete = db.Column(db.Boolean)
+    titulo = db.Column(db.String(200), nullable=False)
+    completa = db.Column(db.Boolean, default=False)
 
 
+# Ruta principal
 @app.route("/")
-def home():
-    todo_list = Todo.query.all()
-    return render_template("base.html", todo_list=todo_list)
+def inicio():
+    tareas = Tarea.query.all()
+    return render_template("base.html", tareas=tareas)
 
 
-@app.route("/add", methods=["POST"])
-def add():
-    title = request.form.get("title")
-    new_todo = Todo(title=title, complete=False)
-    db.session.add(new_todo)
+# Agregar tarea
+@app.route("/agregar", methods=["POST"])
+def agregar():
+    titulo = request.form.get("titulo")
+    if titulo:
+        nueva_tarea = Tarea(titulo=titulo, completa=False)
+        db.session.add(nueva_tarea)
+        db.session.commit()
+    return redirect(url_for("inicio"))
+
+
+# Cambiar estado (pendiente/completa)
+@app.route("/actualizar/<int:tarea_id>")
+def actualizar(tarea_id):
+    tarea = Tarea.query.get_or_404(tarea_id)
+    tarea.completa = not tarea.completa
     db.session.commit()
-    return redirect(url_for("home"))
+    return redirect(url_for("inicio"))
 
 
-@app.route("/update/<int:todo_id>")
-def update(todo_id):
-    todo = Todo.query.filter_by(id=todo_id).first()
-    todo.complete = not todo.complete
+# Editar tarea (formulario)
+@app.route("/editar/<int:tarea_id>", methods=["GET", "POST"])
+def editar(tarea_id):
+    tarea = Tarea.query.get_or_404(tarea_id)
+    if request.method == "POST":
+        nuevo_titulo = request.form.get("titulo")
+        if nuevo_titulo:
+            tarea.titulo = nuevo_titulo
+            db.session.commit()
+            return redirect(url_for("inicio"))
+    return render_template("editar.html", tarea=tarea)
+
+
+# Eliminar tarea
+@app.route("/eliminar/<int:tarea_id>")
+def eliminar(tarea_id):
+    tarea = Tarea.query.get_or_404(tarea_id)
+    db.session.delete(tarea)
     db.session.commit()
-    return redirect(url_for("home"))
+    return redirect(url_for("inicio"))
 
 
-@app.route("/delete/<int:todo_id>")
-def delete(todo_id):
-    todo = Todo.query.filter_by(id=todo_id).first()
-    db.session.delete(todo)
-    db.session.commit()
-    return redirect(url_for("home"))
-
+# Inicializar base de datos y ejecutar
 if __name__ == "__main__":
-    db.create_all()
+    with app.app_context():
+        db.create_all()
     app.run(debug=True)

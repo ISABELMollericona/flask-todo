@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Todo App</title>
+    <title>Aplicación de Tareas</title>
 
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.css">
     <script src="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.js"></script>
@@ -12,32 +12,50 @@
 
 <body>
     <div style="margin-top: 50px;" class="ui container">
-        <h1 class="ui center aligned header">To Do App</h1>
+        <h1 class="ui center aligned teal header"> Lista de Tareas</h1>
 
-        <form class="ui form" action="/add" method="post">
+        <!-- Formulario para agregar tarea -->
+        <form class="ui form" action="/agregar" method="post">
             <div class="field">
-                <label>Todo Title</label>
-                <input type="text" name="title" placeholder="Enter Todo..."><br>
+                <label>Nueva tarea</label>
+                <input type="text" name="titulo" placeholder="Escribe una nueva tarea...">
             </div>
-            <button class="ui blue button" type="submit">Add</button>
+            <button class="ui green button" type="submit"><i class="plus icon"></i>Agregar</button>
         </form>
 
-        <hr>
+        <div class="ui divider"></div>
 
-        {% for todo in todo_list %}
-        <div class="ui segment">
-            <p class="ui big header">{{todo.id }} | {{ todo.title }}</p>
+        <!-- Lista de tareas -->
+        {% if tareas %}
+            {% for tarea in tareas %}
+            <div class="ui segment">
+                <h3 class="ui header">{{ tarea.id }} | {{ tarea.titulo }}</h3>
 
-            {% if todo.complete == False %}
-            <span class="ui gray label">Not Complete</span>
-            {% else %}
-            <span class="ui green label">Completed</span>
-            {% endif %}
+                {% if tarea.completa == False %}
+                    <span class="ui orange label"><i class="hourglass half icon"></i> Pendiente</span>
+                {% else %}
+                    <span class="ui green label"><i class="check icon"></i> Completada</span>
+                {% endif %}
 
-            <a class="ui blue button" href="/update/{{ todo.id }}">Update</a>
-            <a class="ui red button" href="/delete/{{ todo.id }}">Delete</a>
-        </div>
-        {% endfor %}
+                <a class="ui blue button" href="/actualizar/{{ tarea.id }}">
+                    <i class="refresh icon"></i> Cambiar estado
+                </a>
+
+                <a class="ui yellow button" href="/editar/{{ tarea.id }}">
+                    <i class="edit icon"></i> Editar
+                </a>
+
+                <a class="ui red button" href="/eliminar/{{ tarea.id }}" onclick="return confirm('¿Seguro que deseas eliminar esta tarea?')">
+                    <i class="trash icon"></i> Eliminar
+                </a>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="ui message yellow">
+                <div class="header">No hay tareas registradas</div>
+                <p>Agrega una nueva tarea con el formulario de arriba.</p>
+            </div>
+        {% endif %}
     </div>
 </body>
 
